@@ -14,6 +14,7 @@ unit_map = {
     'A':   DIM_I,
     'K':   DIM_Th,
 }
+
 dim_labels = {
     DIM_M:  'M',
     DIM_L:  'L',
@@ -23,7 +24,6 @@ dim_labels = {
     DIM_N:  'N',
     DIM_Iv: 'J',
 }
-
 
 def format_output(expr):
     powers = expr.as_powers_dict()
@@ -38,44 +38,120 @@ def format_output(expr):
 def get_dimensions():
     raw = entry.get().strip()
     if not raw:
-        output_label.config(text="Dimensions:  (enter something first)", fg='gray')
+        output_label.config(text="Enter a formula first!", fg='gray')
         return
     try:
-        expr_str = raw
-        expr_str = expr_str.replace('^', '**')
+        expr_str = raw.replace('^', '**')
 
         for unit in sorted(unit_map.keys(), key=len, reverse=True):
-            sym_name = str(unit_map[unit])         
-            expr_str = expr_str.replace(unit, sym_name)
+            expr_str = expr_str.replace(unit, str(unit_map[unit]))
 
         local_syms = {str(s): s for s in unit_map.values()}
         result = sympify(expr_str, locals=local_syms)
 
-        output_label.config(text=f"Dimensions:  {format_output(result)}", fg='#1D3557')
+        output_label.config(
+            text=f"{format_output(result)}",
+            fg='#1D3557'
+        )
 
     except Exception as e:
-        output_label.config(text=f"Invalid expression  ({e})", fg='#E63946')
+        output_label.config(text=f"Invalid expression ({e})", fg='#E63946')
 
+def clear_input():
+    entry.delete(0, tk.END)
+    output_label.config(text="Dimensions will appear here", fg='#1D3557')
 
+def on_enter(e):
+    e.widget.config(bg="#5A8FB1")
+
+def on_leave(e):
+    e.widget.config(bg="#457B9D")
+    
 window = tk.Tk()
 window.title("Dimensional Analysis")
 window.geometry("520x260")
 window.config(bg='#C1D7C9')
 
-tk.Label(window, text="Dimensional Analysis", bg='#C1D7C9', fg='#1D3557', font=("Helvetica", 15, "bold")).pack(pady=(14, 4))
+title = tk.Label(
+    window,
+    text="Dimensional Analysis Claculator",
+    bg='#C1D7C9',
+    fg='#1D3557',
+    font=("Helvetica", 26, "bold")
+)
+title.pack(pady=20)
+frame = tk.Frame(window, bg='#C1D7C9')
+frame.pack(pady=10)
 
-tk.Label(window, text="Enter formula using:  kg  m  s  A  K  mol  cd   and  *  /  **", bg='#C1D7C9', fg='#457B9D', font=("Helvetica", 9)).pack()
+tk.Label(
+    frame,
+    text="Use units: kg, m, s, A, K, mol, cd   with operators *  /  **",
+    bg='#C1D7C9',
+    fg='#457B9D',
+    font=("Helvetica", 14)
+).pack()
 
-tk.Label(window, text="e.g.   kg*m/s**2     A**2*s**4/(kg*m**2)     mol/s", bg='#C1D7C9', fg='#555', font=("Helvetica", 9, "italic")).pack(pady=(2, 8))
+tk.Label(
+    frame,
+    text="Example:  kg*m/s**2      A**2*s**4/(kg*m**2)      mol/s",
+    bg='#C1D7C9',
+    fg='#555',
+    font=("Helvetica", 13, "italic")
+).pack(pady=(5, 15))
 
-entry = tk.Entry(window, width=38, font=("Helvetica", 12), relief=tk.SOLID, bd=1)
-entry.pack(ipady=4)
+entry = tk.Entry(
+    frame,
+    width=50,
+    font=("Helvetica", 18),
+    relief=tk.FLAT,
+    bd=5,
+    justify='center'
+)
+entry.pack(ipady=8)
 entry.focus_set()
 entry.bind("<Return>", lambda _: get_dimensions())
 
-tk.Button(window, text="Find Dimensions", command=get_dimensions,  bg='#457B9D', fg='white', font=("Helvetica", 11, "bold"),  relief=tk.FLAT, padx=12, pady=4, cursor="hand2").pack(pady=10)
+btn_frame = tk.Frame(frame, bg='#C1D7C9')
+btn_frame.pack(pady=15)
 
-output_label = tk.Label(window, text="Dimensions:", bg='#C1D7C9',    fg='#1D3557', font=("Courier", 13))
-output_label.pack()
+find_btn = tk.Button(
+    btn_frame,
+    text="Find Dimensions",
+    command=get_dimensions,
+    bg='#457B9D',
+    fg='white',
+    font=("Helvetica", 14, "bold"),
+    relief=tk.FLAT,
+    padx=20,
+    pady=8,
+    cursor="hand2"
+)
+find_btn.grid(row=0, column=0, padx=10)
+
+find_btn.bind("<Enter>", on_enter)
+find_btn.bind("<Leave>", on_leave)
+
+clear_btn = tk.Button(
+    btn_frame,
+    text="Clear",
+    command=clear_input,
+    bg='#E63946',
+    fg='white',
+    font=("Helvetica", 14, "bold"),
+    relief=tk.FLAT,
+    padx=20,
+    pady=8,
+    cursor="hand2"
+)
+clear_btn.grid(row=0, column=1, padx=10)
+
+output_label = tk.Label(
+    window,
+    text="Dimensions will appear here",
+    bg='#C1D7C9',
+    fg='#1D3557',
+    font=("Courier", 22, "bold")
+)
+output_label.pack(pady=20)
 
 window.mainloop()
